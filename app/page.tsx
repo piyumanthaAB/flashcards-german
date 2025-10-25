@@ -4,12 +4,15 @@ import { useEffect, useState, useCallback } from 'react';
 import Flashcard from './components/Flashcard';
 import data from './data/data.json';
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function HomePage() {
   const [shuffledCards, setShuffledCards] = useState<typeof data>([]);
   const [selectedLevel, setSelectedLevel] = useState('A1');
   const [selectedSection, setSelectedSection] = useState('basic-verbs');
+  const [isInverse, setIsInverse] = useState(false);
+  const [showFilters, setShowFilters] = useState(false); // 👈 collapsible controls on mobile
 
   const levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'All Levels'];
   const sections = [
@@ -40,18 +43,33 @@ export default function HomePage() {
   if (!shuffledCards.length) return null;
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-start p-8 bg-gradient-to-b from-gray-50 to-gray-100">
-      <h1 className="text-4xl font-bold mb-8 tracking-tight text-gray-800">
+    <main className="min-h-screen flex flex-col items-center justify-start p-4 sm:p-8 bg-gradient-to-b from-gray-50 to-gray-100">
+      <h1 className="text-3xl sm:text-4xl font-bold mb-4 sm:mb-8 tracking-tight text-gray-800 text-center">
         🇩🇪 German Flashcards
       </h1>
 
       {/* Selection Controls */}
-      <Card className="w-full max-w-5xl mb-8 shadow-sm border">
-        <CardHeader>
-          <CardTitle className="text-lg font-semibold mb-2 text-center">
+      <Card className="w-full max-w-5xl mb-6 sm:mb-8 shadow-sm border">
+        <CardHeader
+          onClick={() => setShowFilters((prev) => !prev)}
+          className="cursor-pointer flex justify-between items-center sm:cursor-default sm:block"
+        >
+          <CardTitle className="text-lg font-semibold text-center sm:text-left flex items-center justify-center gap-2">
             Customize Your Practice
+            <span className="sm:hidden">
+              {showFilters ? (
+                <ChevronUp size={18} />
+              ) : (
+                <ChevronDown size={18} />
+              )}
+            </span>
           </CardTitle>
-          <div className="flex flex-col md:flex-row justify-center gap-4 flex-wrap">
+        </CardHeader>
+
+        {/* Collapsible filter section */}
+        {(showFilters ||
+          (typeof window !== 'undefined' && window.innerWidth >= 640)) && (
+          <CardContent className="flex flex-col sm:flex-row justify-center gap-4 flex-wrap">
             {/* Level Selector */}
             <div className="flex flex-wrap justify-center gap-2">
               {levels.map((level) => (
@@ -59,7 +77,7 @@ export default function HomePage() {
                   key={level}
                   variant={selectedLevel === level ? 'default' : 'outline'}
                   onClick={() => setSelectedLevel(level)}
-                  className="px-4"
+                  className="px-3 text-sm sm:text-base"
                 >
                   {level}
                 </Button>
@@ -73,45 +91,57 @@ export default function HomePage() {
                   key={section}
                   variant={selectedSection === section ? 'default' : 'outline'}
                   onClick={() => setSelectedSection(section)}
-                  className="capitalize px-4"
+                  className="capitalize px-3 text-sm sm:text-base"
                 >
                   {section.replace(/-/g, ' ')}
                 </Button>
               ))}
             </div>
 
-            {/* Shuffle Button */}
-            <div className="flex justify-center">
+            {/* Buttons Row */}
+            <div className="flex flex-wrap justify-center gap-2">
               <Button
                 onClick={shuffleCards}
                 variant="secondary"
-                className="font-medium px-4"
+                className="font-medium px-3 text-sm sm:text-base"
               >
-                🔀 Shuffle Cards
+                🔀 Shuffle
+              </Button>
+              <Button
+                onClick={() => setIsInverse((prev) => !prev)}
+                variant={isInverse ? 'destructive' : 'outline'}
+                className="font-medium px-3 text-sm sm:text-base"
+              >
+                🔁 {isInverse ? 'Normal' : 'Inverse'}
               </Button>
             </div>
-          </div>
-        </CardHeader>
+          </CardContent>
+        )}
       </Card>
 
       {/* Info */}
       <div className="text-center mb-6">
-        <h2 className="text-xl font-semibold mb-2">Tap a card to flip it ✨</h2>
-        <p className="text-gray-700">
+        <h2 className="text-lg sm:text-xl font-semibold mb-2">
+          Tap a card to flip it ✨
+        </h2>
+        <p className="text-gray-700 text-sm sm:text-base">
           Current Selection:{' '}
           <span className="font-semibold text-gray-900">
             {selectedLevel} – {selectedSection.replace(/-/g, ' ')}
           </span>
         </p>
+        <p className="text-xs sm:text-sm text-gray-600 mt-1">
+          Mode: {isInverse ? 'English → German' : 'German → English'}
+        </p>
       </div>
 
-      {/* Flashcards Display */}
-      <div className="w-full flex justify-center flex-wrap gap-6 pb-12">
+      {/* Flashcards */}
+      <div className="w-full flex justify-center flex-wrap gap-4 sm:gap-6 pb-12">
         {shuffledCards.map((card) => (
           <Flashcard
             key={card.id}
-            question={card.question}
-            answer={card.answer}
+            question={isInverse ? card.answer : card.question}
+            answer={isInverse ? card.question : card.answer}
           />
         ))}
       </div>
