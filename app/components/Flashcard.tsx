@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 export default function Flashcard({
   question,
@@ -15,12 +16,13 @@ export default function Flashcard({
   return (
     <Card
       onClick={() => setFlipped((prev) => !prev)}
-      className="w-48 h-32 flex items-center justify-center text-center 
+      className="w-36 h-28 flex items-center justify-center text-center 
                  cursor-pointer shadow-md hover:shadow-lg transition-transform 
                  duration-300 transform hover:scale-105 bg-white"
     >
       <span className="text-lg font-medium text-gray-800 select-none">
-        {flipped ? answer : question}
+        {/* {flipped ? answer : question} */}
+        {flipped ? <p className="font-bold">{answer}</p> : <p>{question}</p>}
       </span>
     </Card>
   );
