@@ -2,45 +2,109 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Flashcard from './components/Flashcard';
-import data from './data/data.json';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
-export default function HomePage() {
-  const [shuffledCards, setShuffledCards] = useState<typeof data>([]);
-  const [selectedLevel, setSelectedLevel] = useState('A1');
-  const [selectedSection, setSelectedSection] = useState('basic-verbs');
-  const [isInverse, setIsInverse] = useState(false);
-  const [showFilters, setShowFilters] = useState(false); // 👈 collapsible controls on mobile
+// ✅ Import all A1 datasets
+import basic_verbs_A1 from './data/A1/basic-verbs.json';
+import people_family_A1 from './data/A1/people-and-family.json';
+import adjectives_A1 from './data/A1/adjectives.json';
+import places_objects_nature_A1 from './data/A1/places-objects-nature.json';
+import numbers_colors_days_A1 from './data/A1/numbers-colors-days.json';
+import pronouns_articles_A1 from './data/A1/pronouns-articles.json';
 
-  const levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'All Levels'];
-  const sections = [
+// 🧩 Define types
+type FlashcardItem = {
+  id: number;
+  question: string;
+  answer: string;
+};
+
+type SectionKey =
+  | 'basic-verbs'
+  | 'nouns-people-family'
+  | 'adjectives'
+  | 'noun-places-objects-nature'
+  | 'numbers-colors-days-months'
+  | 'pronouns-articles-prepositions';
+
+type LevelKey = 'A1' | 'A2' | 'B1' | 'B2' | 'C1';
+
+type DatasetStructure = {
+  [L in LevelKey]?: {
+    [S in SectionKey]?: FlashcardItem[];
+  };
+};
+
+// ✅ Centralized dataset mapping
+const datasets: DatasetStructure = {
+  A1: {
+    'basic-verbs': basic_verbs_A1,
+    'nouns-people-family': people_family_A1,
+    adjectives: adjectives_A1,
+    'noun-places-objects-nature': places_objects_nature_A1,
+    'numbers-colors-days-months': numbers_colors_days_A1,
+    'pronouns-articles-prepositions': pronouns_articles_A1,
+  },
+  A2: {},
+  B1: {},
+  B2: {},
+  C1: {},
+};
+
+export default function HomePage() {
+  const [cards, setCards] = useState<FlashcardItem[]>([]);
+  const [shuffledCards, setShuffledCards] = useState<FlashcardItem[]>([]);
+  const [selectedLevel, setSelectedLevel] = useState<LevelKey>('A1');
+  const [selectedSection, setSelectedSection] =
+    useState<SectionKey>('basic-verbs');
+  const [isInverse, setIsInverse] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+
+  const levels: LevelKey[] = ['A1', 'A2', 'B1', 'B2', 'C1'];
+  const sections: SectionKey[] = [
     'basic-verbs',
     'nouns-people-family',
-    'noun-places-objects-nature',
     'adjectives',
+    'noun-places-objects-nature',
     'numbers-colors-days-months',
     'pronouns-articles-prepositions',
-    'common-phrases-expressions',
-    'all-sections',
   ];
 
-  // Fisher–Yates shuffle
-  const shuffleCards = useCallback(() => {
-    const shuffled = [...data];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    setShuffledCards(shuffled);
-  }, []);
-
+  // ✅ Load dataset dynamically
   useEffect(() => {
-    shuffleCards();
-  }, [shuffleCards]);
+    const selectedLevelData = datasets[selectedLevel];
+    const selectedData = selectedLevelData?.[selectedSection] ?? [];
+    setCards(selectedData);
+  }, [selectedLevel, selectedSection]);
 
-  if (!shuffledCards.length) return null;
+  // ✅ Shuffle function
+  const shuffleCards = useCallback(
+    (data?: FlashcardItem[]) => {
+      const source = data || cards;
+      const shuffled = [...source];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      setShuffledCards(shuffled);
+    },
+    [cards]
+  );
+
+  // ✅ Shuffle when cards change
+  useEffect(() => {
+    if (cards.length > 0) shuffleCards(cards);
+  }, [cards, shuffleCards]);
+
+  if (!shuffledCards.length) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-gray-100 text-gray-600">
+        <p>Loading flashcards...</p>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-start p-4 sm:p-8 bg-gradient-to-b from-gray-50 to-gray-100">
@@ -101,7 +165,7 @@ export default function HomePage() {
             {/* Buttons Row */}
             <div className="flex flex-wrap justify-center gap-2">
               <Button
-                onClick={shuffleCards}
+                onClick={() => shuffleCards(cards)}
                 variant="secondary"
                 className="font-medium px-3 text-sm sm:text-base"
               >
@@ -119,7 +183,7 @@ export default function HomePage() {
         )}
       </Card>
 
-      {/* Info */}
+      {/* Info Section */}
       <div className="text-center mb-6">
         <h2 className="text-lg sm:text-xl font-semibold mb-2">
           Tap a card to flip it ✨
